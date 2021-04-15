@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from transforms3d.euler import euler2mat
 from mpl_toolkits.mplot3d import Axes3D
+import random, math
 
 
 class Joint:
@@ -92,6 +93,17 @@ class Joint:
         zs = [child.coordinate[2, 0], parent.coordinate[2, 0]]
         plt.plot(zs, xs, ys, 'r')
     plt.show()
+  
+  def printPositions(self):
+    joints = self.to_dict()
+
+    xs, ys, zs = [], [], []
+    for joint in joints.values():
+      xs.append(joint.coordinate[0, 0])
+      ys.append(joint.coordinate[1, 0])
+      zs.append(joint.coordinate[2, 0])
+    print(xs)
+
 
   def to_dict(self):
     ret = {self.name: self}
@@ -238,6 +250,10 @@ def parse_amc(file_path):
     frames.append(joint_degree)
   return frames
 
+# This function takes in two 3D points and calculates the distance between them.
+def getDistance(point1, point2):
+  return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2 + (point1[2] - point2[2]) ** 2)
+
 
 def test_all():
   import os
@@ -248,27 +264,19 @@ def test_all():
     asf_path = '%s/%s/%s.asf' % (lv0, lv1, lv1)
     print('parsing %s' % asf_path)
     joints = parse_asf(asf_path)
-    motions = parse_amc('./nopose.amc')
-    joints['root'].set_motion(motions[0])
-    joints['root'].draw()
-
-    # for lv2 in lv2s:
-    #   if lv2.split('.')[-1] != 'amc':
-    #     continue
-    #   amc_path = '%s/%s/%s' % (lv0, lv1, lv2)
-    #   print('parsing amc %s' % amc_path)
-    #   motions = parse_amc(amc_path)
-    #   for idx, motion in enumerate(motions):
-    #     print('setting motion %d' % idx)
-    #     joints['root'].set_motion(motion)
+    motions = parse_amc('./data/01/01_01.amc')
+    for motion in motions:
+      joints['root'].set_motion(motion)
+      for joint in joints.keys():
+        print("Joint name: " + joint)
+        # print("Joint coordinates: " + str(joints[joint].coordinate[0]) + ", " + str(joints[joint].coordinate[1]) + ", " + str(joints[joint].coordinate[2]))
+        for anchor in ["rclavicle", "lclavicle", "rhipjoint", "lhipjoint"]:
+          realDistance = getDistance(joints[joint].coordinate, joints[anchor].coordinate)
+          print(joint + " distance from " + anchor + " is: " + str(realDistance))
+          errorDistance = getDistance([joints[joint].coordinate[0] + random.uniform(-0.197, 0.197), joints[joint].coordinate[1] + random.uniform(-0.197, 0.197), joints[joint].coordinate[2] + random.uniform(-0.197, 0.197)], joints[anchor].coordinate)
+          print(joint + " distance from " + anchor + " is: " + str(errorDistance))
+          print("difference in real and measured distance: " + str(realDistance-errorDistance))
 
 
 if __name__ == '__main__':
   test_all()
-  # asf_path = './133.asf'
-  # amc_path = './133_01.amc'
-  # joints = parse_asf(asf_path)
-  # motions = parse_amc(amc_path)
-  # frame_idx = 0
-  # joints['root'].set_motion(motions[frame_idx])
-  # joints['root'].draw()
