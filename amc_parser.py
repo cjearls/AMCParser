@@ -264,30 +264,31 @@ def test_all():
     asf_path = '%s/%s/%s.asf' % (lv0, lv1, lv1)
     print('parsing %s' % asf_path)
     joints = parse_asf(asf_path)
-    motions = parse_amc('./data/01/01_01.amc')
-    errorPercentages = list()
-    for motion in motions:
-      joints['root'].set_motion(motion)
-      for joint in joints.keys():
-        # print("Joint name: " + joint)
-        # print("Joint coordinates: " + str(joints[joint].coordinate[0]) + ", " + str(joints[joint].coordinate[1]) + ", " + str(joints[joint].coordinate[2]))
-        for anchor in ["rclavicle", "lclavicle", "rhipjoint", "lhipjoint"]:
-          realDistance = getDistance(joints[joint].coordinate, joints[anchor].coordinate)
-          # print(joint + " distance from " + anchor + " is: " + str(realDistance))
-          errorDistance = getDistance([joints[joint].coordinate[0] + random.uniform(-0.197, 0.197), joints[joint].coordinate[1] + random.uniform(-0.197, 0.197), joints[joint].coordinate[2] + random.uniform(-0.197, 0.197)], joints[anchor].coordinate)
-          # print(joint + " distance from " + anchor + " is: " + str(errorDistance))
-          # print("difference in real and measured distance: " + str(realDistance-errorDistance))
-          if(realDistance != 0):
-            errorPercentage = (realDistance-errorDistance)/realDistance
-            # print("Percentage error: " + str(errorPercentage))
-            errorPercentages.append(errorPercentage)
-    totalPercentageError = 0
-    for error in errorPercentages:
-      if(error > 0):
-        totalPercentageError += error
-      else:
-        totalPercentageError -= error
-    print("Average Distance Percentage error: " + str(totalPercentageError/len(errorPercentages)))
+    for file in ['./data/01/01_01.amc', './data/01/01_02.amc', './data/01/01_03.amc', './data/01/01_04.amc', './data/01/01_05.amc', './data/01/01_06.amc', './data/01/01_07.amc', './data/01/01_08.amc', './data/01/01_09.amc', './data/01/01_10.amc']:
+      motions = parse_amc(file)
+      errorPercentages = list()
+      for motion in motions:
+        joints['root'].set_motion(motion)
+        for joint in joints.keys():
+          # print("Joint name: " + joint)
+          # print("Joint coordinates: " + str(joints[joint].coordinate[0]) + ", " + str(joints[joint].coordinate[1]) + ", " + str(joints[joint].coordinate[2]))
+          for anchor in ["rclavicle", "lclavicle", "rhipjoint", "lhipjoint"]:
+            realDistance = getDistance(joints[joint].coordinate, joints[anchor].coordinate)
+            # print(joint + " distance from " + anchor + " is: " + str(realDistance))
+            errorDistance = getDistance([joints[joint].coordinate[0] + random.uniform(-0.197, 0.197), joints[joint].coordinate[1] + random.uniform(-0.197, 0.197), joints[joint].coordinate[2] + random.uniform(-0.197, 0.197)], joints[anchor].coordinate)
+            # print(joint + " distance from " + anchor + " is: " + str(errorDistance))
+            # print("difference in real and measured distance: " + str(realDistance-errorDistance))
+            if(realDistance != 0):
+              errorPercentage = (realDistance-errorDistance)/realDistance
+              # print("Percentage error: " + str(errorPercentage))
+              errorPercentages.append(errorPercentage)
+      totalPercentageError = 0
+      for error in errorPercentages:
+        if(error > 0):
+          totalPercentageError += error
+        else:
+          totalPercentageError -= error
+      print("Average Distance Error for file " + file + ": " + str(totalPercentageError/len(errorPercentages)))
 
 
 if __name__ == '__main__':
