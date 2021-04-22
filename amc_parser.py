@@ -264,7 +264,7 @@ def test_all():
     asf_path = '%s/%s/%s.asf' % (lv0, lv1, lv1)
     print('parsing %s' % asf_path)
     joints = parse_asf(asf_path)
-    configString = "getDistanceError"
+    configString = "getRigidBodyError"
     print("Config string is set to: " + configString)
     for file in ['./data/01/01_01.amc', './data/01/01_02.amc', './data/01/01_03.amc', './data/01/01_04.amc', './data/01/01_05.amc', './data/01/01_06.amc', './data/01/01_07.amc', './data/01/01_08.amc', './data/01/01_09.amc', './data/01/01_10.amc']:
       motions = parse_amc(file)
@@ -297,28 +297,24 @@ def test_all():
         # This code checks how much the distances between the clavicles and hip joints varies from the first frame to the rest of the frames.
         joints['root'].set_motion(motions[0])
         startingAnchorDistancesFromRightClavicle = dict()
+        errorPercentages = dict()
         for anchor in ["lclavicle", "rhipjoint", "lhipjoint"]:
           startingAnchorDistancesFromRightClavicle[anchor] = getDistance(joints["rclavicle"].coordinate, joints[anchor].coordinate)
+          errorPercentages[anchor] = list()
         for motion in motions:
           joints['root'].set_motion(motion)
           for joint in ["lclavicle", "rhipjoint", "lhipjoint"]:
-            for anchor in ["rclavicle", "lclavicle", "rhipjoint", "lhipjoint"]:
-              realDistance = getDistance(joints[joint].coordinate, joints[anchor].coordinate)
-              # print(joint + " distance from " + anchor + " is: " + str(realDistance))
-              errorDistance = getDistance([joints[joint].coordinate[0] + random.uniform(-0.197, 0.197), joints[joint].coordinate[1] + random.uniform(-0.197, 0.197), joints[joint].coordinate[2] + random.uniform(-0.197, 0.197)], joints[anchor].coordinate)
-              # print(joint + " distance from " + anchor + " is: " + str(errorDistance))
-              # print("difference in real and measured distance: " + str(realDistance-errorDistance))
-              if(realDistance != 0):
-                errorPercentage = (realDistance-errorDistance)/realDistance
-                # print("Percentage error: " + str(errorPercentage))
-                errorPercentages.append(errorPercentage)
-        totalPercentageError = 0
-        for error in errorPercentages:
-          if(error > 0):
+            realDistance = getDistance(joints[joint].coordinate, joints["rclavicle"].coordinate)
+            distanceDifference = startingAnchorDistancesFromRightClavicle[joint] - realDistance
+            differencePercentage = distanceDifference/realDistance
+            if(differencePercentage < 0):
+              differencePercentage = -1 * differencePercentage
+            errorPercentages[joint].append(differencePercentage)
+        for anchor in ["lclavicle", "rhipjoint", "lhipjoint"]:
+          totalPercentageError = 0
+          for error in errorPercentages[anchor]:
             totalPercentageError += error
-          else:
-            totalPercentageError -= error
-        print("Average Distance Error for file " + file + ": " + str(totalPercentageError/len(errorPercentages)))
+          print("Average Rigid body error for file " + file + " from rclavicle to " + anchor + ": " + str(totalPercentageError/len(errorPercentages[anchor])))
 
 
 
